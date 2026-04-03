@@ -29,6 +29,17 @@ use crate::{
     },
 };
 
+
+#[derive(Debug, Clone)]
+pub struct NewSessionId {
+    pub session_id: Arc<str>,
+}
+impl NewSessionId {
+    pub fn value(&self) -> &str {
+        &self.session_id
+    }
+}
+
 #[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct StreamableHttpServerConfig {
@@ -557,7 +568,9 @@ where
         }
 
         // json deserialize request body
+
         let (part, body) = request.into_parts();
+
         let mut message = match expect_json(body).await {
             Ok(message) => message,
             Err(response) => return Ok(response),
@@ -648,7 +661,11 @@ where
                         return Err(unexpected_message_response("initialize request"));
                     }
                     // inject request part to extensions
+
                     req.request.extensions_mut().insert(part);
+                    req.request.extensions_mut().insert(NewSessionId {
+                        session_id: session_id.clone(),
+                    });
                 } else {
                     return Err(unexpected_message_response("initialize request"));
                 }
